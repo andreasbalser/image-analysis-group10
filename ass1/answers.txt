@@ -1,0 +1,13 @@
+Task 1:
+b. Shortly describe the characteristics of the histogram.
+In the histogram you can see that the entirety of pixel values lies between ~150/~225. The contrast of the image is therefore very low as there is not much difference between dark and light areas of the picture.
+
+d. Shortly describe the differences to the initial histogram.
+The formerly very narrowly distributed pixel values are now mapped to the full range of possible values (0-255), giving the image much more contrast. You can now see much more clearly the two local maxima of the histogram.
+
+Task 2:
+c. The lower the threshold value, the more pixels are binarized as foreground and vice versa. If the threshold is too low, much of the water becomes foreground as well (We will invert the binary image after thresholding, so initially water is supposed to be background). If it is too high, too much of the land becomes background. The best separation between water and land is achieved somewhere between the two local maxima of the histogram. But still, a perfect separation of the two is not possible with only thresholding.
+
+Task 3:
+d. The results are more or less satisfactory, even though the separation still isn't perfect as some large shadows of buildings are masked as foreground in the final result. However, if you were to increase the structuring element dimensions you could catch the remaining wrongly separated land areas, but you would lose the bridges as well. Thus, the limitation of this approach is that you can only specify one structuring element for the whole image.
+e. The same algorithm might work well on other images, but this strongly depends on the brightness values of foreground and background pixels. Additionally, if in an image the foreground cannot be sparated solely based on brightness values, this approach is also not fitting.
