@@ -1,152 +1,141 @@
+from PIL import Image
+from utils import rgb2grayfloat
 import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image  # We'll use PIL (Pillow) to load images
 from scipy.signal import convolve2d
-from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
 
-img_rgb = np.array(Image.open('ass2/ampelmaennchen.png').convert('RGB'))
-img = np.array(Image.open('ass2/ampelmaennchen.png').convert('L')).astype(np.float32) / 255.0
+# Load and prepare image
+img = Image.open("ampelmaennchen.png").convert("RGB")
+img_np = np.asarray(img) / 255.0
+gray_img = rgb2grayfloat(img_np)
 
-def imdilation(binary_img, structuring_element):
-    m, n = binary_img.shape
-    k_m, k_n = structuring_element.shape
-    
-    pad_m = k_m // 2
-    pad_n = k_n // 2
-    padded_img = np.pad(binary_img, ((pad_m, pad_m), (pad_n, pad_n)), mode='constant', constant_values=0)
-    
-    output = np.zeros_like(binary_img)
-    
-    for i in range(m):
-        for j in range(n):
-            region = padded_img[i:i+k_m, j:j+k_n]
-            if np.any(np.logical_and(region == 1, structuring_element == 1)):
-                output[i, j] = 1
-    
-    return output
+## TASK A: Compute GoG kernels, apply them, and return gradient images Ix, Iy and magnitude G.
 
-def overlay_mask(image, binary_mask):
+def gog_gradient_and_magnitude(gray_img, sigma=0.5, kernel_size=5, show=True):
 
-    binary_mask = binary_mask.astype(bool) # Ensure mask is boolean
+    # Compute GoG-filter kernels for x- and y-direction
+    def gog_kernels(sigma, size):
+        radius = size // 2
 
-    overlay_img = image.copy()
+        #Create a meshgrid of x and y coordinates centered around 0
+        x, y = np.meshgrid(
+            np.linspace(-radius, radius, size),
+            np.linspace(-radius, radius, size)
+        )
 
-    if image.ndim == 2:  # Grayscale
-        overlay_img[binary_mask] = 255
+        #Compute the 2D Gaussian kernel
+        gaussian = (1 / (2 * np.pi * sigma**2)) * np.exp(-(x**2 + y**2) / (2 * sigma**2))
 
-    elif image.ndim == 3 and image.shape[2] == 3:  # RGB
-        overlay_img[binary_mask] = [255, 0, 0]
+        #Compute the gradient of the Gaussian in x-direction
+        gx = -x * gaussian / (sigma**2)
 
-    else:
-        raise ValueError("Input image must be either grayscale or RGB with 3 channels.")
+        #compute the gradient of the Gaussian in y-direction
+        gy = -y * gaussian / (sigma**2)
 
-    return overlay_img
+        return gx, gy
 
-def gradient_of_gaussian_kernel(size=5, sigma=1.0, direction='x'):
-    assert size % 2 == 1, "Size must be odd"
-    assert direction in ('x', 'y'), "Direction must be 'x' or 'y'"
-    
-    k = size // 2
-    y, x = np.meshgrid(np.arange(-k, k+1), np.arange(-k, k+1), indexing='ij')
-    
-    # 2D Gaussian derivative (gradient of Gaussian)
-    factor = -1 / (2 * np.pi * sigma**4) # separate the constant factor to speed up the calculation
+    #Apply the two filters Gx and Gy on the input image using convolution
+    def apply_gog_filters(gray, Gx, Gy):
 
-    if direction == 'x':    gaussian_derivative = np.round(factor * x * np.exp(-(x**2 + y**2) / (2 * sigma**2)), 4)
-    else:                   gaussian_derivative = np.round(factor * y * np.exp(-(x**2 + y**2) / (2 * sigma**2)), 4)
-    
-    return gaussian_derivative
+        # Convolve the image with the Gx kernel to get the x-gradient image
+        Ix = convolve2d(gray, Gx, mode='valid')
 
-# TASK A =============================================================
+        # Convolve the image with the Gy kernel to get the y-gradient image
+        Iy = convolve2d(gray, Gy, mode='valid')
 
-sigma = .6
-kernel_size = 5
+        return Ix, Iy
 
-G_x = gradient_of_gaussian_kernel(kernel_size, sigma, 'x') # Kernel X
-G_y = gradient_of_gaussian_kernel(kernel_size, sigma, 'y') # Kernel Y
+    # Get the GoG filter kernels for x and y
+    Gx, Gy = gog_kernels(sigma, kernel_size)
 
-I_x = convolve2d(img, G_x, mode='same', boundary='symm') # horizontal gradient
-I_y = convolve2d(img, G_y, mode='same', boundary='symm') # vertical gradient
+    # Apply filters to compute the gradient images Ix and Iy
+    Ix, Iy = apply_gog_filters(gray_img, Gx, Gy)
 
-I_x_square = I_x ** 2
-I_y_square = I_y ** 2
+    # Compute and visualize the gradient magnitude
+    # Compute gradient magnitude
+    G = np.sqrt(Ix**2 + Iy**2)
 
-G = np.sqrt(I_x_square + I_y_square) # Gradient magnitude
+    if show:
+        plt.figure(figsize=(12, 4))
 
-plt.figure(); plt.imshow(G, 'gray'); plt.title("Gradient Magnitude"); plt.axis('off')
+        plt.subplot(1, 3, 1)
+        plt.title("Gradient x (Ix)")
+        plt.imshow(Ix, cmap='gray')
+        plt.axis('off')
 
-# TASK B =============================================================
+        plt.subplot(1, 3, 2)
+        plt.title("Gradient y (Iy)")
+        plt.imshow(Iy, cmap='gray')
+        plt.axis('off')
 
-# a
+        plt.subplot(1, 3, 3)
+        plt.title("Gradient Magnitude (G)")
+        plt.imshow(G, cmap='gray')
+        plt.axis('off')
 
-w_n = np.ones((kernel_size, kernel_size), np.int8) # weights for local neighborhood
+        plt.tight_layout()
+        plt.show()
 
-Ix_Iy = I_x * I_y
+    return Ix, Iy, G
 
-# Smooth the products with a Gaussian
-sigma_for_gradient_smoothing = .6
-I_x_square = gaussian_filter(I_x_square, sigma=sigma_for_gradient_smoothing)
-I_y_square = gaussian_filter(I_y_square, sigma=sigma_for_gradient_smoothing)
-Ix_Iy = gaussian_filter(Ix_Iy, sigma=sigma_for_gradient_smoothing)
+## TASK b: detect Förstner interest points based on gradient images Ix and Iy.
 
-Ix2_conv = convolve2d(I_x_square, w_n, mode='same', boundary='symm')
-Iy2_conv = convolve2d(I_y_square, w_n, mode='same', boundary='symm')
-IxIy_conv = convolve2d(Ix_Iy, w_n, mode='same', boundary='symm')
+def foerstner_interest_points(Ix, Iy, gray_img, window_size=5, tw=0.004, tq=0.5, show=True):
+    # Compute gradient products
+    Ix2 = Ix**2
+    Iy2 = Iy**2
+    Ixy = Ix * Iy
 
-H, W = Ix2_conv.shape
+    # Autocorrelation matrix via convolution
+    window = np.ones((window_size, window_size))
+    S_Ix2 = convolve2d(Ix2, window, mode='valid')
+    S_Iy2 = convolve2d(Iy2, window, mode='valid')
+    S_Ixy = convolve2d(Ixy, window, mode='valid')
 
-M = np.zeros((H, W, 2, 2))
-M[..., 0, 0] = I_x_square   # top-left: Ix^2
-M[..., 0, 1] = Ix_Iy  # top-right: IxIy
-M[..., 1, 0] = Ix_Iy  # bottom-left: IxIy
-M[..., 1, 1] = I_y_square   # bottom-right: Iy^2
+    # Compute cornerness and roundness
+    det_M = S_Ix2 * S_Iy2 - S_Ixy**2
+    trace_M = S_Ix2 + S_Iy2
 
-# b
+    epsilon = 1e-12
+    W = det_M
+    Q = 4 * det_M / (trace_M**2 + epsilon)
 
-# Step 1: Compute trace and determinant
-trace = I_x_square + I_y_square
-det = I_x_square * I_y_square - Ix_Iy**2
+    # Thresholding
+    interest_mask = (W > tw) & (Q > tq)
+    y_coords, x_coords = np.where(interest_mask)
 
-# Step 2: Compute eigenvalues of the structure tensor
-half_trace = trace / 2
-under_sqrt = np.clip(half_trace**2 - det, 0, None)  # Ensure non-negative for sqrt
-lambda1 = half_trace + np.sqrt(under_sqrt)
-lambda2 = half_trace - np.sqrt(under_sqrt)
+    # Crop image to match W/Q size
+    crop_y, crop_x = W.shape
+    gray_cropped = gray_img[:crop_y, :crop_x]
 
-W = np.minimum(lambda1, lambda2)# Shi-Tomasi cornerness measure: minimum eigenvalue
+    if show:
+        plt.figure(figsize=(16, 4))
 
-# Step 3: Compute roundness q
-epsilon = 1e-12  # Avoid divide-by-zero
-Q = (4 * det) / (trace**2 + epsilon)
+        plt.subplot(1, 3, 1)
+        plt.title("Cornerness W")
+        plt.imshow(W, cmap='jet')
+        plt.colorbar()
+        plt.axis('off')
 
+        plt.subplot(1, 3, 2)
+        plt.title("Roundness Q")
+        plt.imshow(Q, cmap='jet')
+        plt.colorbar()
+        plt.axis('off')
 
-# Clamp any tiny negatives
-W = np.clip(W, 0, None)
-Q = np.clip(Q, 0, 1)
+        plt.subplot(1, 3, 3)
+        plt.title("Förstner Interest Points")
+        plt.imshow(gray_cropped, cmap='gray')
+        plt.plot(x_coords, y_coords, 'rx', markersize=1)
+        plt.axis('off')
 
-plt.figure(); plt.imshow(W, 'jet'); plt.title("Cornerness"); plt.axis('off')
-plt.figure(); plt.imshow(Q, 'jet'); plt.title("Roundness"); plt.axis('off')
+        plt.tight_layout()
+        plt.show()
 
-# c
+    return interest_mask, W, Q
 
-t_w = 0.001
-t_q = 0.5
+# Task A
+Ix, Iy, G = gog_gradient_and_magnitude(gray_img, sigma=0.5, kernel_size=5)
 
-#T_w = 1.0 * (W > t_w)
-#plt.figure(); plt.imshow(T_w, 'jet'); plt.title("Cornerness thres"); plt.axis('off')
-#T_q = 1.0 * (Q > t_q)
-#plt.figure(); plt.imshow(T_q, 'jet'); plt.title("Roundness thres"); plt.axis('off')
-
-mask = (W > t_w) & (Q > t_q)
-
-# d
-
-# Dilate points for better visibility
-structuring_element = np.ones((5, 5), bool)
-dilated_mask = imdilation(mask, structuring_element)
-
-final_overlay = overlay_mask(img_rgb, dilated_mask)
-
-
-plt.figure(); plt.imshow(final_overlay, ); plt.title("Final Overlay"); plt.axis('off')
-plt.show()
+# Task B
+interest_mask, W, Q = foerstner_interest_points(Ix, Iy, gray_img, window_size=5, tw=0.004, tq=0.5)
