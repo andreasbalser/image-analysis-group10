@@ -3,9 +3,10 @@ from utils import rgb2grayfloat
 import numpy as np
 from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
+import os
 
 # Load and prepare image
-img = Image.open("ampelmaennchen.png").convert("RGB")
+img = Image.open("ass2/ampelmaennchen.png").convert("RGB")
 img_np = np.asarray(img) / 255.0
 gray_img = rgb2grayfloat(img_np)
 
@@ -74,6 +75,9 @@ def gog_gradient_and_magnitude(gray_img, sigma=0.5, kernel_size=5, show=True):
         plt.axis('off')
 
         plt.tight_layout()
+        plt.savefig(os.path.join("ass2/output_images", "task_a_combined.png"))
+        plt.show()
+
         plt.show()
 
     return Ix, Iy, G
@@ -130,6 +134,7 @@ def foerstner_interest_points(Ix, Iy, gray_img, window_size=5, tw=0.004, tq=0.5,
         plt.axis('off')
 
         plt.tight_layout()
+        plt.savefig(os.path.join("ass2/output_images", "task_b_combined.png"))
         plt.show()
 
     return interest_mask, W, Q
