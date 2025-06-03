@@ -29,10 +29,10 @@ def houghpeaks(H, num_peaks, threshold=None, nhood_size=None):
         peaks.append([p, q])
         
         # Suppress neighborhood
-        p1 = max(0, p - nhood_size[0] // 2)
-        p2 = min(Hnew.shape[0], p + nhood_size[0] // 2 + 1)
-        q1 = max(0, q - nhood_size[1] // 2)
-        q2 = min(Hnew.shape[1], q + nhood_size[1] // 2 + 1)
+        p1 = max(0, p - nhood_size[0] // 2)                 # above of index
+        p2 = min(Hnew.shape[0], p + nhood_size[0] // 2 + 1) # below of index
+        q1 = max(0, q - nhood_size[1] // 2)                 # left of index
+        q2 = min(Hnew.shape[1], q + nhood_size[1] // 2 + 1) # right of index
         
         # Zero out the neighborhood
         Hnew[p1:p2, q1:q2] = 0
@@ -40,6 +40,8 @@ def houghpeaks(H, num_peaks, threshold=None, nhood_size=None):
     # Return empty array with right shape if no peaks
     if not peaks:
         return np.zeros((0, 2), dtype=int)
+    
+    # print("Found Peaks: " + str(peaks))
     return np.array(peaks)
 
 def houghpixels(binary_img, theta, rho, peak):
