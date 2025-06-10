@@ -1,8 +1,8 @@
 import numpy as np
-import hough_utils
-import imadjust_utils
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from provided_utility_code.imadjust_utils import imadjust
+from provided_utility_code.hough_utils import houghpeaks, houghlines  
 from PIL import Image  # We'll use PIL (Pillow) to load images
 from scipy.signal import convolve2d
 
@@ -79,26 +79,16 @@ def hough(edge_mask, Ix, Iy):
         
     return accumulator, theta, rho
 
-
 accumulator, theta, rho = hough(edge_mask, Ix, Iy)
 
-plt.figure(); plt.imshow(imadjust_utils.imadjust(accumulator.T), 'gray'); plt.title("Voting Table")
+plt.figure(); plt.imshow(imadjust(accumulator.T), 'gray'); plt.title("Voting Table")
 
-hough_peaks = hough_utils.houghpeaks(accumulator, 40, .4, [12, 12])
-hough_lines = hough_utils.houghlines(edge_mask, theta, rho, hough_peaks, fill_gap=20, min_length=50)
+hough_peaks = houghpeaks(accumulator, 40, .4, [12, 12])
+hough_lines = houghlines(edge_mask, theta, rho, hough_peaks, fill_gap=20, min_length=50)
 
 def plot_peaks_on_accumulator(accumulator, peaks, rect_size=[12, 12]):
-    """
-    Plots the accumulator matrix and draws rectangles around the given peaks.
-
-    Parameters:
-        accumulator (np.ndarray): The Hough accumulator matrix.
-        peaks (np.ndarray): Array of peak indices, shape (N, 2), each row is [rho_idx, theta_idx].
-        rect_size (int): The size of the rectangle (in pixels).
-    """
-    
     plt.figure()
-    plt.imshow(imadjust_utils.imadjust(accumulator.T), cmap='gray')
+    plt.imshow(imadjust(accumulator.T), cmap='gray')
     ax = plt.gca()
     for peak in peaks:
         # Note: accumulator.T is plotted, so swap x/y for rectangle
@@ -113,22 +103,17 @@ def plot_peaks_on_accumulator(accumulator, peaks, rect_size=[12, 12]):
     plt.axis('on')
     
 def plot_hough_lines_on_image(img_rgb, hough_lines, color=(255, 0, 0), linewidth=2):
-    """
-    Plots the detected Hough lines on the original RGB image.
-
-    Parameters:
-        img_rgb (np.ndarray): The original RGB image as a numpy array.
-        hough_lines (list): List of dicts, each with 'point1' and 'point2' as endpoints.
-        color (tuple): RGB color for the lines.
-        linewidth (int): Line width.
-    """
-    plt.figure()
+    # i. Plot final lines on original RGB image
+    plt.figure(figsize=(8, 8))
     plt.imshow(img_rgb)
+    plt.title("Final Line Detection Visualization")
+
     for line in hough_lines:
-        p1 = line['point1']
-        p2 = line['point2']
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color=np.array(color)/255, linewidth=linewidth)
-    plt.title("Detected Hough Lines")
+        (x1, y1), (x2, y2) = line['point1'], line['point2']
+
+        plt.plot([x1, x2], [y1, y2], color='lime', linewidth=2)
+        plt.plot(x1, y1, 'ro', markersize=5)
+        plt.plot(x2, y2, 'yo', markersize=5)
     plt.axis('off')
 
 plot_peaks_on_accumulator(accumulator, hough_peaks)
