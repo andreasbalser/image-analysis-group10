@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 from scipy.ndimage import median_filter
+import os
 
 # Load image with PIL and convert to RGB
 img_path = 'ass5/input_images/inputEx5_1.jpg'
@@ -70,5 +71,13 @@ create_figure(img, None, "Original Image", 0)
 create_figure(segmented_img, None, f"K-Means Segmented (k={k})", 0)
 plt.show()
 
-# Save the segmented image
-output_path = 'ass5/output_images/segmented_image.jpg'
+output_dir = 'ass5/output_images'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# Convert segmented_img (numpy array) to PIL Image and save
+img_to_save = Image.fromarray(segmented_img)
+output_path = os.path.join(output_dir, "segmented_output.jpg")
+img_to_save.save(output_path)
+
+print(f"Segmented image saved to {output_path}")
