@@ -1,0 +1,5 @@
+Are the results of 5D k-means segmentation different or significantly better?
+
+No, I wouldn't say the results are significantly better. Both approaches (3D and 5D) do not segment the different colors perfectly due to different reflections, very similar colors and - most of the times - unlikely odds of the cluster centers falling in the perfect minima.
+The results are different in the way that when including positional data, the homogeniously colored background gets segmented into two clusters.
+Because, for the example of a rubix cube, positional data carries no meaningful information for clustering, I would prefer the 3D (RGB) feature space in this case.

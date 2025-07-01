@@ -9,26 +9,14 @@ def create_figure (img, cmap, title, hasAxes):
 
 number_clusters = 8
 
-def k_means(img_rgb, k):
+def k_means_3D(img_rgb, k):
     H, W, _ = img_rgb.shape
 
-    # Flatten RGB values: shape (H*W, 3)
-    rgb = img_rgb.reshape(-1, 3)
-
-    # Create X and Y coordinate grids
-    x_coords, y_coords = np.meshgrid(np.arange(W), np.arange(H))
-
-    # Flatten: shape (H*W,)
-    x_flat = x_coords.flatten()
-    y_flat = y_coords.flatten()
-
-    # Stack all features: shape (H*W, 5)
-    feature_space = np.column_stack((rgb, x_flat, y_flat))
+    # Feature space are all [rgb] values flattened
+    feature_space = img_rgb.reshape(-1, 3)
     
     random_colors = np.random.randint(0, 256, (k, 3)).astype(np.float64) # Start off with k random cluster centers
-    random_x = np.random.randint(0, W, (k, 1)).astype(np.float64)
-    random_y = np.random.randint(0, H, (k, 1)).astype(np.float64)
-    cluster_centers = np.column_stack((random_colors, random_x, random_y))
+    cluster_centers = random_colors
     
     cluster_attribution = np.full(len(feature_space), -1) # Stores, which pixel belongs to which cluster
     
@@ -73,6 +61,65 @@ def k_means(img_rgb, k):
                 attrib_wasChanged = 1
                 
         print("Clustering loop ", loop_count)
+
+    # Map each pixel to the RGB of its assigned cluster
+    result_pixels = cluster_centers[cluster_attribution]  # shape (H*W, 3)
+
+    # Reshape to original image shape
+    result_img = result_pixels.reshape(H, W, 3).astype(np.uint8)
+    
+    return result_img, cluster_centers
+
+def k_means_5D(img_rgb, k):
+    H, W, _ = img_rgb.shape
+
+    # Flatten RGB values: shape (H*W, 3)
+    rgb = img_rgb.reshape(-1, 3)
+
+    # Create X and Y coordinate grids
+    x_coords, y_coords = np.meshgrid(np.arange(W), np.arange(H))
+
+    # Flatten: shape (H*W,)
+    x_flat = x_coords.flatten()
+    y_flat = y_coords.flatten()
+
+    # Stack all features: shape (H*W, 5)
+    feature_space = np.column_stack((rgb, x_flat, y_flat))
+    
+    random_colors = np.random.randint(0, 256, (k, 3)).astype(np.float64) # Start off with k random cluster centers
+    random_x = np.random.randint(0, W, (k, 1)).astype(np.float64)
+    random_y = np.random.randint(0, H, (k, 1)).astype(np.float64)
+    cluster_centers = np.column_stack((random_colors, random_x, random_y))
+    
+    cluster_attribution = np.full(len(feature_space), -1) # Stores, which pixel belongs to which cluster
+    
+    attrib_wasChanged = 1
+    loop_count = 0
+    
+    
+    while(attrib_wasChanged == 1): # Loop stops when cluster centers don't change anymore
+        attrib_wasChanged = 0
+        loop_count += 1
+        
+        # Compute all distances in one go
+        # Resulting shape: (num_pixels, k)
+        distances = np.linalg.norm(feature_space[:, None, :] - cluster_centers[None, :, :], axis=2)
+
+        # Get the index (cluster) with the minimum distance for each pixel
+        cluster_attribution = np.argmin(distances, axis=1)
+        
+        # Calculate the new cluster centers for this attribution
+        for cluster_idx, cluster_center in enumerate(cluster_centers):
+            cluster_array = feature_space[cluster_attribution == cluster_idx, :]
+            new_cluster_center = cluster_array.mean(axis=0)
+            
+            if(np.linalg.norm(cluster_center - new_cluster_center) > 0.0):
+                #print("Iteration " + str(loop_count) + ": " + str(np.linalg.norm(cluster_center - new_cluster_center)))
+                cluster_centers[cluster_idx] = new_cluster_center
+                attrib_wasChanged = 1
+                
+        print("Clustering loop ", loop_count)
+
                 
     # Get only the RGB part of the cluster centers
     cluster_centers_rgb = cluster_centers[:, :3]  # shape (k, 3)
@@ -85,7 +132,33 @@ def k_means(img_rgb, k):
         
     return result_img
 
-clustered_img = k_means(img_rgb, number_clusters)
+def printClusters_3D(cluster_centers):
+    normalized_rgb = cluster_centers / 255.0
+
+    # Create figure and 3D axes
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Plot RGB points in 3D space
+    ax.scatter(
+        cluster_centers[:, 0],  # Red as X
+        cluster_centers[:, 1],  # Green as Y
+        cluster_centers[:, 2],  # Blue as Z
+        c=normalized_rgb, # Use normalized RGB for colors
+        s=100             # Size of points
+    )
+
+    # Label axes
+    ax.set_xlabel('Red')
+    ax.set_ylabel('Green')
+    ax.set_zlabel('Blue')
+
+    ax.set_title('RGB Color Space')
+
+clustered_img, cluster_centers = k_means_3D(img_rgb, number_clusters)
 
 create_figure(clustered_img, None, "Segmented with k = 8", 0)
+
+printClusters_3D(cluster_centers)
+
 plt.show()
