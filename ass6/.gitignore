@@ -4,4 +4,5 @@
 # But not these files/folders:
 !.gitignore
 !main.py
+!output_images/*
 !output_images/
