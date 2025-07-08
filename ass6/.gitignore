@@ -3,7 +3,7 @@
 
 # But not these files/folders:
 !.gitignore
-!main.py
+!taskA.py
 !output_images/*
 !output_images/
 !documentation/*
