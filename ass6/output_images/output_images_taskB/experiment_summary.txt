@@ -1,0 +1,29 @@
+=== EXPERIMENT SUMMARY (Task B) ===
+
+--- CONFIG 1 ---
+Channels: 8 → 16, Kernel Size: 3
+Final Accuracy: 92.79%
+Training Time: 89.32 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_16f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_config1.png
+
+--- CONFIG 2 ---
+Channels: 16 → 32, Kernel Size: 3
+Final Accuracy: 93.10%
+Training Time: 133.72 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_config2.png
+
+--- CONFIG 3 ---
+Channels: 32 → 64, Kernel Size: 3
+Final Accuracy: 93.33%
+Training Time: 224.98 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_config3.png
+
+--- CONFIG 4 ---
+Channels: 16 → 32, Kernel Size: 5
+Final Accuracy: 93.24%
+Training Time: 225.02 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_config4.png

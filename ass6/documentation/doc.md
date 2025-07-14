@@ -37,3 +37,59 @@ This document compares the training results of a simple CNN (Task A) and a deepe
 - **Deeper architectures improve performance** significantly on the EMNIST classification task.
 - The trade-off is **longer training time**, but accuracy gains justify the complexity.
 - The deeper model from Task B serves as a strong baseline for future experiments (e.g., learning rate tuning, batch normalization, or GPU acceleration).
+
+
+# CNN Architecture Experiments – Task B.C
+
+## What Are Feature Maps?
+
+In Convolutional Neural Networks (CNNs), **feature maps** (also called channels or filters) are the outputs of convolution layers. Each filter detects specific features like edges, textures, or shapes within the input.
+
+- **More feature maps** allow the model to detect a broader range of patterns.
+- However, increasing the number of filters also leads to **higher computational cost and memory usage**.
+
+---
+
+## Experiment Setup
+
+We ran 4 model configurations, each trained on the EMNIST **letters** dataset with the following settings:
+
+- **Epochs**: 5  
+- **Optimizer**: Adam  
+- **Learning Rate**: 0.001  
+- **Batch Size**: 64 (training), 1000 (testing)  
+- **Loss Function**: CrossEntropyLoss  
+- **Device**: CPU  
+
+All models used the same training code and architecture structure, with variations in filter size and kernel size.
+
+---
+
+## Results Summary
+
+| Config | Channels (Conv1 → Conv2) | Kernel Size | Final Accuracy | Training Time |
+|--------|---------------------------|-------------|----------------|----------------|
+| 1      | 8 → 16                    | 3           | 92.79%         | 89.32 sec      |
+| 2      | 16 → 32                   | 3           | 93.10%         | 133.72 sec     |
+| 3      | 32 → 64                   | 3           | 93.33%         | 224.98 sec     |
+| 4      | 16 → 32                   | 5           | 93.24%         | 225.02 sec     |
+
+---
+
+## Observations
+
+- Increasing the number of feature maps improved accuracy across the first three configurations.
+- **Diminishing returns**: The accuracy gain from 32→64 filters was minimal, while training time nearly doubled.
+- Larger kernel size (**Config 4**) slightly improved accuracy but incurred **significantly more computation**.
+- **Best trade-off**: Config 2 (16 → 32 filters, kernel size 3) offers a strong balance between performance and speed.
+
+---
+
+## Conclusion
+
+- **Feature maps are essential** for detecting patterns — more maps = richer representations.
+- **Larger filters** can help but should be used sparingly due to their cost.
+- **Careful tuning** of architecture is necessary to balance model complexity and efficiency.
+
+Each model, loss plot, and log is saved for further comparison.
+

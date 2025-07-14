@@ -6,6 +6,8 @@ from torch.utils.data import DataLoader
 import string
 import matplotlib.pyplot as plt
 import random
+import torch.nn as nn
+
 
 
 def load_emnist_data(root: str = "ass6/data", batch_size_train: int = 64, batch_size_test: int = 1000):
@@ -107,3 +109,23 @@ def print_and_save_summary(device,
     summary_path = os.path.join(output_dir, "training_summary.txt")
     with open(summary_path, "w") as f:
         f.write(summary)
+
+class DeepCNN(nn.Module):
+    def __init__(self, channels_1=16, channels_2=32, kernel_size=3):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Conv2d(1, channels_1, kernel_size=kernel_size, padding=kernel_size // 2),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(channels_1, channels_2, kernel_size=kernel_size, padding=kernel_size // 2),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Flatten(),
+            nn.Dropout(0.3),
+            nn.Linear(channels_2 * 7 * 7, 128),
+            nn.ReLU(),
+            nn.Linear(128, 26)
+        )
+
+    def forward(self, x):
+        return self.model(x)
