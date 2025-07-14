@@ -4,6 +4,9 @@
 # But not these files/folders:
 !.gitignore
 !taskA.py
+!taskB.py
+!taskC.py
+!taskD.py
 !output_images/*
 !output_images/
 !documentation/*
