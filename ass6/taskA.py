@@ -3,17 +3,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
-from torchvision.datasets import EMNIST
-from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-import random
-import string
 import time
 import os
+from utils import generate_model_name, save_model, print_and_save_summary, load_emnist_data, plot_random_emnist_samples
+
 
 # === 2. Output Folder Setup ===
 # Create folder for saving plots if it doesn't exist
-output_dir = "output_images"
+output_dir = "ass6/output_images/output_images_taskA"
 os.makedirs(output_dir, exist_ok=True)
 
 # === 3. Device Configuration ===
@@ -25,34 +23,14 @@ print(f"Using device: {device}")
 # Convert PIL images to PyTorch tensors
 transform = transforms.ToTensor()
 
-# === 5. Load EMNIST Dataset (letters split) ===
-# EMNIST labels range from 1 to 26 (A to Z)
-train_set = EMNIST(root='./data', split='letters', train=True, download=True, transform=transform)
-test_set = EMNIST(root='./data', split='letters', train=False, download=True, transform=transform)
+# Load data
+train_loader, test_loader, label_map = load_emnist_data()
+train_set = train_loader.dataset  # Needed for plotting
 
-# === 6. DataLoader Setup ===
-# Enables batch loading and shuffling
-train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_set, batch_size=1000)
+# Plot sample images
+sample_image_path = os.path.join(output_dir, "sample_images.png")
+plot_random_emnist_samples(train_set, label_map, sample_image_path)
 
-# === 7. Label Mapping: Integer (1–26) → Alphabet Letter ===
-label_map = {i: letter for i, letter in enumerate(string.ascii_uppercase, start=1)}
-
-# === 8. Plot Sample Images from the Dataset ===
-def plot_random_emnist_samples(dataset, num_samples=4):
-    fig, axes = plt.subplots(1, num_samples, figsize=(15, 3))
-    for ax in axes:
-        idx = random.randint(0, len(dataset) - 1)
-        img, label = dataset[idx]
-        # EMNIST images are rotated, so transpose them for correct orientation
-        ax.imshow(img.squeeze().T, cmap='gray')
-        ax.set_title(label_map[label])
-        ax.axis('off')
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "sample_images.png"))
-    plt.show()
-
-plot_random_emnist_samples(train_set)
 
 # === 9. Define a Simple CNN Model ===
 model = nn.Sequential(
@@ -117,10 +95,13 @@ end_time = time.time()
 training_time = end_time - start_time
 print(f"\nTotal training time: {training_time:.2f} seconds")
 
+
+final_accuracy = test(model, test_loader)
+
+
 def smooth_losses(losses, factor=20):
     # Groups every `factor` losses and averages them
     return [sum(losses[i:i+factor]) / factor for i in range(0, len(losses), factor)]
-
 
 # === 14. Plot Loss per Batch ===
 plt.figure(figsize=(10, 5))
@@ -135,3 +116,31 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(output_dir, "training_loss_plot_smoothed.png"))
 plt.show()
+
+model_name = generate_model_name(
+    architecture="cnn1",  # or "deepcnn"
+    num_filters=8,        # or 32
+    fc_out=26,
+    num_epochs=num_epochs,
+    optimizer_name="Adam",
+    learning_rate=0.001,
+    accuracy=final_accuracy,
+    device_used=str(device)
+)
+
+model_path = save_model(model, model_name, output_dir="ass6/saved_models/saved_models_taskA")  # or taskB
+
+print_and_save_summary(
+    device=device,
+    num_epochs=num_epochs,
+    train_loader=train_loader,
+    test_loader=test_loader,
+    optimizer_name="Adam",
+    learning_rate=0.001,
+    training_time=training_time,
+    loss_plot_path=os.path.join(output_dir, "training_loss_plot_smoothed.png"),
+    sample_plot_path=os.path.join(output_dir, "sample_images.png"),
+    final_accuracy=final_accuracy,
+    model_path=model_path,
+    output_dir=output_dir
+)

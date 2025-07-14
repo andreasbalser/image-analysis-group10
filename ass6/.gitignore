@@ -1,13 +1,17 @@
 # Ignore everything
 *
 
-# But not these files/folders:
+# Keep only specific files/folders
 !.gitignore
 !taskA.py
 !taskB.py
 !taskC.py
 !taskD.py
-!output_images/*
+!utils.py
 !output_images/
-!documentation/*
+!output_images/**
 !documentation/
+!documentation/**
+
+# Explicitly ignore dataset
+data/
