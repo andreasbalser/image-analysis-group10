@@ -1,0 +1,129 @@
+=== COMBINED EXPERIMENT SUMMARY (Task C + D) ===
+
+--- EXPERIMENT 1 ---
+Channels: 8 → 16, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 64, Epochs: 5
+Final Accuracy: 92.43%
+Training Time: 87.06 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_16f_fc26_ep5_adam_lr0.001_acc92_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp1.png
+
+--- EXPERIMENT 2 ---
+Channels: 8 → 16, Kernel Size: 3
+Learning Rate: 0.0005, Batch Size: 64, Epochs: 5
+Final Accuracy: 92.48%
+Training Time: 86.17 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_16f_fc26_ep5_adam_lr0.0005_acc92_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp2.png
+
+--- EXPERIMENT 3 ---
+Channels: 8 → 16, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 128, Epochs: 5
+Final Accuracy: 92.29%
+Training Time: 85.62 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_16f_fc26_ep5_adam_lr0.001_acc92_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp3.png
+
+--- EXPERIMENT 4 ---
+Channels: 8 → 16, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 64, Epochs: 10
+Final Accuracy: 93.48%
+Training Time: 173.20 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_16f_fc26_ep10_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp4.png
+
+--- EXPERIMENT 5 ---
+Channels: 16 → 32, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 64, Epochs: 5
+Final Accuracy: 93.37%
+Training Time: 129.18 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp5.png
+
+--- EXPERIMENT 6 ---
+Channels: 16 → 32, Kernel Size: 3
+Learning Rate: 0.0005, Batch Size: 64, Epochs: 5
+Final Accuracy: 92.91%
+Training Time: 131.46 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.0005_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp6.png
+
+--- EXPERIMENT 7 ---
+Channels: 16 → 32, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 128, Epochs: 5
+Final Accuracy: 92.25%
+Training Time: 125.56 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc92_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp7.png
+
+--- EXPERIMENT 8 ---
+Channels: 16 → 32, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 64, Epochs: 10
+Final Accuracy: 93.72%
+Training Time: 275.49 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep10_adam_lr0.001_acc94_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp8.png
+
+--- EXPERIMENT 9 ---
+Channels: 32 → 64, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 64, Epochs: 5
+Final Accuracy: 93.51%
+Training Time: 216.32 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep5_adam_lr0.001_acc94_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp9.png
+
+--- EXPERIMENT 10 ---
+Channels: 32 → 64, Kernel Size: 3
+Learning Rate: 0.0005, Batch Size: 64, Epochs: 5
+Final Accuracy: 93.01%
+Training Time: 217.40 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep5_adam_lr0.0005_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp10.png
+
+--- EXPERIMENT 11 ---
+Channels: 32 → 64, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 128, Epochs: 5
+Final Accuracy: 93.36%
+Training Time: 202.73 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp11.png
+
+--- EXPERIMENT 12 ---
+Channels: 32 → 64, Kernel Size: 3
+Learning Rate: 0.001, Batch Size: 64, Epochs: 10
+Final Accuracy: 94.06%
+Training Time: 440.32 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep10_adam_lr0.001_acc94_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp12.png
+
+--- EXPERIMENT 13 ---
+Channels: 16 → 32, Kernel Size: 5
+Learning Rate: 0.001, Batch Size: 64, Epochs: 5
+Final Accuracy: 93.37%
+Training Time: 210.26 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp13.png
+
+--- EXPERIMENT 14 ---
+Channels: 16 → 32, Kernel Size: 5
+Learning Rate: 0.0005, Batch Size: 64, Epochs: 5
+Final Accuracy: 93.49%
+Training Time: 212.72 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.0005_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp14.png
+
+--- EXPERIMENT 15 ---
+Channels: 16 → 32, Kernel Size: 5
+Learning Rate: 0.001, Batch Size: 128, Epochs: 5
+Final Accuracy: 93.38%
+Training Time: 199.48 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp15.png
+
+--- EXPERIMENT 16 ---
+Channels: 16 → 32, Kernel Size: 5
+Learning Rate: 0.001, Batch Size: 64, Epochs: 10
+Final Accuracy: 93.95%
+Training Time: 6319.40 sec
+Model Path: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep10_adam_lr0.001_acc94_cpu.pth
+Loss Plot: ass6/output_images/output_images_taskB/loss_exp16.png

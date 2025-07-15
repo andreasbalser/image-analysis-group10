@@ -93,3 +93,47 @@ All models used the same training code and architecture structure, with variatio
 
 Each model, loss plot, and log is saved for further comparison.
 
+# Combined Experiment Summary (Task C + D)
+
+## Purpose of Parameters
+
+### Learning Rate
+- **Purpose**: Controls the size of weight updates during training.
+- **Effect**:
+  - Too high → risk of overshooting and divergence.
+  - Too low → slow convergence, risk of getting stuck in local minima.
+- **Example**: 
+  - Exp. 1 (LR=0.001) vs. Exp. 2 (LR=0.0005) → Accuracy difference: 92.43% vs. 92.48%.
+  - Exp. 12 (LR=0.001) outperforms Exp. 10 (LR=0.0005) → 94.06% vs. 93.01%.
+
+### Epochs
+- **Purpose**: Defines how many times the model processes the full dataset.
+- **Effect**:
+  - More epochs → allows more learning, may improve accuracy.
+  - Too many epochs → risk of overfitting, longer training time.
+- **Example**:
+  - Exp. 4 (5 → 10 epochs) → Accuracy improves from 92.43% to 93.48%.
+  - Exp. 8 and 12 (10 epochs) achieve top accuracies (93.72%, 94.06%).
+
+### Batch Size
+- **Purpose**: Number of samples processed before updating weights.
+- **Effect**:
+  - Smaller batch size → more frequent updates, better generalization, slower training.
+  - Larger batch size → faster per epoch, less generalization, smoother gradients.
+- **Example**:
+  - Exp. 5 vs. 7: Batch size 64 (93.37%) outperforms batch size 128 (92.25%).
+  - Exp. 9 vs. 11: Batch size 64 (93.51%) slightly better than 128 (93.36%).
+
+---
+
+## Best Performing Model (for Task C and Task D)
+
+| Experiment | Channels     | Kernel Size | LR     | Batch Size | Epochs | Accuracy | Training Time |
+|------------|--------------|-------------|--------|-------------|--------|----------|----------------|
+| **12**     | 32 → 64      | 3           | 0.001  | 64          | 10     | **94.06%** | 440.32 sec     |
+
+- **Model Path**: `ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep10_adam_lr0.001_acc94_cpu.pth`
+- **Loss Plot**: `ass6/output_images/output_images_taskB/loss_exp12.png`
+
+> **Note**: Include only this model in your submission folder.  
+> This model will be used as the basis for **Task C** and **Task D**.

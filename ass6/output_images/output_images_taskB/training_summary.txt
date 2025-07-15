@@ -1,13 +1,13 @@
 
 === TRAINING SUMMARY ===
 Device used: cpu
-Number of epochs: 5
+Number of epochs: 10
 Training batch size: 64
 Testing batch size: 1000
 Optimizer: Adam
 Learning rate: 0.001
-Total training time: 225.02 seconds
-Loss plot saved to: ass6/output_images/output_images_taskB/loss_config4.png
+Total training time: 6319.40 seconds
+Loss plot saved to: ass6/output_images/output_images_taskB/loss_exp16.png
 Sample image plot saved to: ass6/output_images/output_images_taskB/sample_images.png
-Final Test Accuracy: 93.24%
-Model saved to: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep5_adam_lr0.001_acc93_cpu.pth
+Final Test Accuracy: 93.95%
+Model saved to: ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep10_adam_lr0.001_acc94_cpu.pth
