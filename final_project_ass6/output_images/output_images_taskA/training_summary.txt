@@ -1,0 +1,13 @@
+
+=== TRAINING SUMMARY ===
+Device used: cpu
+Number of epochs: 5
+Training batch size: 64
+Testing batch size: 1000
+Optimizer: Adam
+Learning rate: 0.001
+Total training time: 43.66 seconds
+Loss plot saved to: final_project_ass6/output_images/output_images_taskA/training_loss_plot_smoothed.png
+Sample image plot saved to: final_project_ass6/output_images/output_images_taskA/sample_images.png
+Final Test Accuracy: 87.24%
+Model saved to: final_project_ass6/saved_models/saved_models_taskA/cnn1_8f_fc26_ep5_adam_lr0.001_acc87_cpu.pth

@@ -128,3 +128,10 @@ with torch.no_grad():
 
 accuracy = 100 * correct / total
 print(f"Test Accuracy: {accuracy:.2f}%")
+
+# -----------------------------
+# Save the trained digit model for Task D
+# -----------------------------
+save_path = "ass6/saved_models/saved_models_taskC/transfer_digit_model.pth"
+torch.save(model.state_dict(), save_path)
+print(f"Transfer learning model saved to {save_path}")

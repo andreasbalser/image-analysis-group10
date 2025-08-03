@@ -11,7 +11,7 @@ from utils import generate_model_name, save_model, print_and_save_summary, load_
 
 # === 2. Output Folder Setup ===
 # Create folder for saving plots if it doesn't exist
-output_dir = "ass6/output_images/output_images_taskA"
+output_dir = "final_project_ass6/output_images/output_images_taskA"
 os.makedirs(output_dir, exist_ok=True)
 
 # === 3. Device Configuration ===
