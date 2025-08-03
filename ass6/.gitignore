@@ -12,6 +12,6 @@
 !output_images/**
 !documentation/
 !documentation/**
-
+!data/OWN
 # Explicitly ignore dataset
 data/
