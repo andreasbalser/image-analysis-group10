@@ -5,6 +5,13 @@ import torchvision.transforms as transforms
 import time
 from torch.utils.data import DataLoader
 from torchvision.datasets import EMNIST
+import os
+
+from utils import (
+    generate_model_name,
+    DeepCNN
+)
+
 
 # -----------------------------
 # Configuration
@@ -15,7 +22,7 @@ LEARNING_RATE = 0.001  # From Experiment 12
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_CLASSES = 10  # Digits 0–9
 
-MODEL_PATH = "/Users/mirjamnowotny/Library/Mobile Documents/com~apple~CloudDocs/Uni/Semester 2/Image Analysis/Assignments/image-analysis-group10/ass6/saved_models/saved_models_taskB/deepcnn_64f_fc26_ep10_adam_lr0.001_acc94_cpu.pth"
+MODEL_PATH = "final_project_ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep10_adam_lr0.001_acc94_cpu.pth"
 
 # -----------------------------
 # Define model architecture (same as Task B)
@@ -50,10 +57,9 @@ transform = transforms.Compose([
     transforms.Normalize((0.1307,), (0.3081,))  # Standard MNIST normalization
 ])
 
-DATA_PATH = "final_project_ass6/data"
-
-train_dataset = EMNIST(root=DATA_PATH, split="digits", train=True, download=True, transform=transform)
-test_dataset = EMNIST(root=DATA_PATH, split="digits", train=False, download=True, transform=transform)
+data_root = "final_project_ass6/data"
+train_dataset = EMNIST(root=data_root, split="digits", train=True, download=True, transform=transform)
+test_dataset = EMNIST(root=data_root, split="digits", train=False, download=True, transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
@@ -134,6 +140,28 @@ print(f"Test Accuracy: {accuracy:.2f}%")
 # -----------------------------
 # Save the trained digit model for Task D
 # -----------------------------
-save_path = "ass6/saved_models/saved_models_taskC/transfer_digit_model.pth"
+
+
+# -----------------------------
+# Save the trained digit model for Task D
+# -----------------------------
+# Generate descriptive model name
+model_name = generate_model_name(
+    architecture="deepcnn_transfer",
+    num_filters=32,
+    fc_out=10,
+    num_epochs=EPOCHS,
+    optimizer_name="Adam",
+    learning_rate=LEARNING_RATE,
+    accuracy=accuracy,
+    device_used=str(DEVICE)
+)
+
+# Define save directory
+save_dir = "final_project_ass6/saved_models/saved_models_taskC"
+os.makedirs(save_dir, exist_ok=True)
+
+save_path = os.path.join(save_dir, model_name + ".pth")
 torch.save(model.state_dict(), save_path)
 print(f"Transfer learning model saved to {save_path}")
+

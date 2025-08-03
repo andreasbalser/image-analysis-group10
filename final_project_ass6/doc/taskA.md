@@ -1,3 +1,11 @@
+After loading the dataset, plot a random selection of image samples and the corresponding labels (similar to Figure 1.). Include this figure in your project documentation.
+
+Briefly explain the meaning of the network layers and their parameters.
+
+Record in your project documentation the achieved accuracy, all important training parameters such as number of epochs, batch size, total training time, as well as the plot of the loss during training. Explain which optimizer you have selected and why. Report whether the training was performed using the CPU or the GPU.
+
+---
+
 # Task A – Initial Setup and Baseline Training
 
 For the initial setup, the EMNIST **letters** dataset (28×28 grayscale images) was used to train a simple CNN for handwritten letter classification. The network architecture consisted of:
@@ -8,7 +16,7 @@ For the initial setup, the EMNIST **letters** dataset (28×28 grayscale images) 
 - **Flattening**: Converts feature maps into a 1D vector  
 - **Fully Connected Layer (1568 → 26)**: Maps extracted features to the 26 alphabet classes  
 
-**CrossEntropyLoss** was used as the loss function and **Adam optimizer** for parameter updates. The training was done on the CPU.
+**CrossEntropyLoss** was used as the loss function and **Adam optimizer** for parameter updates. Adam was selected because it combines the benefits of momentum and adaptive learning rates, which typically speeds up convergence. The training was done on the CPU.
 
 ---
 
