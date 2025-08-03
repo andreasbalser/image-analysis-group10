@@ -137,3 +137,74 @@ Each model, loss plot, and log is saved for further comparison.
 
 > **Note**: Include only this model in your submission folder.  
 > This model will be used as the basis for **Task C** and **Task D**.
+
+
+# ✅ Transfer Learning Summary – Task C
+
+## 📌 Pretrained Model Details (from Task B - Experiment 12)
+
+- **Model Path**:  
+  `deepcnn_64f_fc26_ep10_adam_lr0.001_acc94_cpu.pth`
+- **Architecture**:  
+  - Channels: 32 → 64  
+  - Kernel Size: 3  
+  - Final Fully Connected Output: 26 (letters A–Z)
+- **Training Epochs**: 10  
+- **Original Accuracy**: 94.06%
+
+---
+
+# ✅ Transfer Learning Summary – Task C
+
+## 📌 Pretrained Model Details (from Task B - Experiment 12)
+
+- **Model Path**:  
+  `deepcnn_64f_fc26_ep10_adam_lr0.001_acc94_cpu.pth`
+- **Architecture**:  
+  - Channels: 32 → 64  
+  - Kernel Size: 3  
+  - Final Fully Connected Output: 26 (letters A–Z)
+- **Training Epochs**: 10  
+- **Original Accuracy**: 94.06%
+
+---
+
+## 🔁 Transfer Learning Setup (Task C)
+
+- **Dataset**: EMNIST (`digits` split)
+- **Output Classes**: 10 (digits 0–9)
+- **Final Layer Modification**:  
+  - Replaced `Linear(128, 26)` → `Linear(128, 10)`
+- **Frozen Layers**: All except the final classification layer
+- **Learning Rate**: 0.001
+- **Batch Size**: 64
+- **Epochs (Transfer)**: 5
+
+---
+
+## 📈 Results
+
+| Metric             | Value             |
+|--------------------|-------------------|
+| **Training Time**  | 158.77 seconds    |
+| **Test Accuracy**  | 98.47%            |
+
+---
+
+## ⏱️ Comparison to Full Training
+
+| Mode                  | Training Time      | Accuracy    | Notes                         |
+|-----------------------|--------------------|-------------|-------------------------------|
+| **Full Training**     | 440.32 sec         | 94.06%      | Task B, Experiment 12         |
+| **Transfer Learning** | **158.77 sec** ✅  | **98.47%**  | Only final layer trained      |
+
+- **Time Saved**: ~281.55 seconds (~64% faster)
+- **Accuracy Gain**: +4.41 percentage points
+
+---
+
+## ✅ Conclusion
+
+- Transfer learning significantly reduced training time (by ~64%) while **increasing accuracy**.
+- This demonstrates that the pretrained model had already learned generalizable features useful for digit recognition.
+- Retraining **only the final layer** was highly efficient and effective.
