@@ -6,51 +6,62 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import time
 import os
-from utils import generate_model_name, save_model, print_and_save_summary, load_emnist_data, plot_random_emnist_samples
-
+import string
+import random
+from torchvision.datasets import EMNIST
+from torch.utils.data import DataLoader
 
 # === 2. Output Folder Setup ===
-# Create folder for saving plots if it doesn't exist
-output_dir = "final_project_ass6/output_images/output_images_taskA"
+output_dir = "output_images/output_images_taskA"
 os.makedirs(output_dir, exist_ok=True)
 
 # === 3. Device Configuration ===
-# Use GPU if available, otherwise fallback to CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# === 4. Transform Setup ===
-# Convert PIL images to PyTorch tensors
+# === 4. Data Loading ===
 transform = transforms.ToTensor()
+train_set = EMNIST(root="data", split='letters', train=True, download=True, transform=transform)
+test_set = EMNIST(root="data", split='letters', train=False, download=True, transform=transform)
+train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=1000)
 
-# Load data
-train_loader, test_loader, label_map = load_emnist_data()
-train_set = train_loader.dataset  # Needed for plotting
+label_map = {i: letter for i, letter in enumerate(string.ascii_uppercase, start=1)}
 
-# Plot sample images
+# === 5. Plot Random Sample Images ===
+def plot_random_emnist_samples(dataset, label_map, output_path, num_samples=4):
+    fig, axes = plt.subplots(1, num_samples, figsize=(15, 3))
+    for ax in axes:
+        idx = random.randint(0, len(dataset) - 1)
+        img, label = dataset[idx]
+        ax.imshow(img.squeeze().T, cmap='gray')
+        ax.set_title(label_map[label])
+        ax.axis('off')
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.show()
+
 sample_image_path = os.path.join(output_dir, "sample_images.png")
 plot_random_emnist_samples(train_set, label_map, sample_image_path)
 
-
-# === 9. Define a Simple CNN Model ===
+# === 6. Define Simple CNN Model (Figure 2) ===
 model = nn.Sequential(
-    nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=1),  # (28x28) → (28x28)
-    nn.ReLU(),                                                           # Non-linear activation
-    nn.MaxPool2d(kernel_size=2, stride=2),                               # (28x28) → (14x14)
-    nn.Flatten(),                                                        # 8×14×14 = 1568
-    nn.Linear(in_features=8 * 14 * 14, out_features=26)                  # Map to 26 classes (A–Z)
+    nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=1),
+    nn.ReLU(),
+    nn.MaxPool2d(kernel_size=2, stride=2),
+    nn.Flatten(),
+    nn.Linear(in_features=8 * 14 * 14, out_features=26)
 ).to(device)
 
-# === 10. Loss Function and Optimizer ===
-criterion = nn.CrossEntropyLoss()  # For multi-class classification
-optimizer = optim.Adam(model.parameters(), lr=0.001)  # Adaptive learning rate
+# === 7. Loss Function and Optimizer ===
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# === 11. Training + Batch Loss Recording ===
+# === 8. Training and Testing Functions ===
 def train(model, loader, optimizer, criterion, epoch, loss_list):
     model.train()
     total_loss = 0
     for batch_idx, (data, target) in enumerate(loader):
-        # EMNIST labels go from 1–26 → shift to 0–25
         data, target = data.to(device), (target - 1).to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -60,11 +71,9 @@ def train(model, loader, optimizer, criterion, epoch, loss_list):
 
         loss_list.append(loss.item())
         total_loss += loss.item()
-
     avg_loss = total_loss / len(loader)
     print(f"Epoch {epoch} — Avg. Training Loss: {avg_loss:.4f}")
 
-# === 12. Testing Accuracy Function ===
 def test(model, loader):
     model.eval()
     correct = 0
@@ -80,7 +89,7 @@ def test(model, loader):
     print(f"Test Accuracy: {accuracy:.2f}%")
     return accuracy
 
-# === 13. Training Loop with Timer and Loss Tracking ===
+# === 9. Training Loop ===
 num_epochs = 5
 all_batch_losses = []
 start_time = time.time()
@@ -95,18 +104,16 @@ end_time = time.time()
 training_time = end_time - start_time
 print(f"\nTotal training time: {training_time:.2f} seconds")
 
-
+# Final test
 final_accuracy = test(model, test_loader)
 
-
+# === 10. Plot Loss ===
 def smooth_losses(losses, factor=20):
-    # Groups every `factor` losses and averages them
     return [sum(losses[i:i+factor]) / factor for i in range(0, len(losses), factor)]
 
-# === 14. Plot Loss per Batch ===
 plt.figure(figsize=(10, 5))
 for epoch_idx, losses in enumerate(all_batch_losses):
-    smoothed = smooth_losses(losses, factor=20)  # Smooth out spikes
+    smoothed = smooth_losses(losses, factor=20)
     plt.plot(smoothed, label=f"Epoch {epoch_idx + 1}")
 plt.title("Training Loss per Batch")
 plt.xlabel("Batch")
@@ -114,33 +121,40 @@ plt.ylabel("Loss")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(output_dir, "training_loss_plot_smoothed.png"))
+loss_plot_path = os.path.join(output_dir, "training_loss_plot_smoothed.png")
+plt.savefig(loss_plot_path)
 plt.show()
 
-model_name = generate_model_name(
-    architecture="cnn1",  # or "deepcnn"
-    num_filters=8,        # or 32
-    fc_out=26,
-    num_epochs=num_epochs,
-    optimizer_name="Adam",
-    learning_rate=0.001,
-    accuracy=final_accuracy,
-    device_used=str(device)
-)
+# === 11. Save Model ===
+def save_model(model, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    torch.save(model.state_dict(), path)
+    print(f"Model saved to: {path}")
 
-model_path = save_model(model, model_name, output_dir="final_project_ass6/saved_models/saved_models_taskA")  # or taskB
+model_path = f"saved_models/saved_models_taskA/cnn1_8f_fc26_ep{num_epochs}_adam_lr0.001_acc{int(final_accuracy)}_{str(device)}.pth"
+save_model(model, model_path)
 
-print_and_save_summary(
-    device=device,
-    num_epochs=num_epochs,
-    train_loader=train_loader,
-    test_loader=test_loader,
-    optimizer_name="Adam",
-    learning_rate=0.001,
-    training_time=training_time,
-    loss_plot_path=os.path.join(output_dir, "training_loss_plot_smoothed.png"),
-    sample_plot_path=os.path.join(output_dir, "sample_images.png"),
-    final_accuracy=final_accuracy,
-    model_path=model_path,
-    output_dir=output_dir
-)
+# === 12. Summary Logging ===
+def print_and_save_summary(summary_path):
+    summary = (
+        "\n=== TRAINING SUMMARY ===\n"
+        f"Device used: {device}\n"
+        f"Number of epochs: {num_epochs}\n"
+        f"Training batch size: {train_loader.batch_size}\n"
+        f"Testing batch size: {test_loader.batch_size}\n"
+        f"Optimizer: Adam\n"
+        f"Learning rate: 0.001\n"
+        f"Total training time: {training_time:.2f} seconds\n"
+        f"Loss plot saved to: {loss_plot_path}\n"
+        f"Sample image plot saved to: {sample_image_path}\n"
+        f"Final Test Accuracy: {final_accuracy:.2f}%\n"
+        f"Model saved to: {model_path}\n"
+    )
+
+    print(summary)
+    os.makedirs(os.path.dirname(summary_path), exist_ok=True)
+    with open(summary_path, "w") as f:
+        f.write(summary)
+
+summary_path = os.path.join(output_dir, "training_summary.txt")
+print_and_save_summary(summary_path)

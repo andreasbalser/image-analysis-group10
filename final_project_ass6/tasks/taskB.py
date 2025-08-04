@@ -1,56 +1,74 @@
+# === DeepCNN Experiments – No utils.py dependency ===
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import torchvision.transforms as transforms
 import time
 import os
-import shutil  # NEW: For copying the best model
+import shutil
+import string
+import random
+from torchvision.datasets import EMNIST
+from torch.utils.data import DataLoader
 
-from utils import (
-    generate_model_name,
-    save_model,
-    print_and_save_summary,
-    load_emnist_data,
-    DeepCNN
-)
-
-# === 1. Setup Directories ===
-output_dir_base = "final_project_ass6/output_images/output_images_taskB"
-model_dir_test = "final_project_ass6/saved_models/test_models"
-model_dir_final = "final_project_ass6/saved_models/saved_models_taskB"
-summary_file_path = os.path.join(output_dir_base, "combined_experiment_summary.txt")
-
+# === Directories ===
+output_dir_base = "output_images/output_images_taskB"
+model_dir_test = "saved_models/test_models"
+model_dir_final = "saved_models/saved_models_taskB"
+data_dir = "data"
 os.makedirs(output_dir_base, exist_ok=True)
 os.makedirs(model_dir_test, exist_ok=True)
 os.makedirs(model_dir_final, exist_ok=True)
 
-# === 2. Device Configuration ===
+# === Device ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# === 3. Initial Data Preview ===
-# Load EMNIST once to preview some samples
-train_loader_preview, _, label_map = load_emnist_data(batch_size_train=64)
+# === Data Loader ===
+def load_emnist_data(batch_size_train=64, batch_size_test=1000):
+    transform = transforms.ToTensor()
+    train_set = EMNIST(root=data_dir, split='letters', train=True, download=True, transform=transform)
+    test_set = EMNIST(root=data_dir, split='letters', train=False, download=True, transform=transform)
+    train_loader = DataLoader(train_set, batch_size=batch_size_train, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size_test)
+    label_map = {i: letter for i, letter in enumerate(string.ascii_uppercase, start=1)}
+    return train_loader, test_loader, label_map
 
-# === 4. Define experiment variations ===
+# === Deep CNN Model ===
+class DeepCNN(nn.Module):
+    def __init__(self, channels_1=16, channels_2=32, kernel_size=3):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Conv2d(1, channels_1, kernel_size=kernel_size, padding=kernel_size // 2),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
 
-# Architectures to test
-architectures = [
-    {"channels_1": 8, "channels_2": 16, "kernel_size": 3},
-    {"channels_1": 16, "channels_2": 32, "kernel_size": 3},
-    {"channels_1": 32, "channels_2": 64, "kernel_size": 3},
-    {"channels_1": 16, "channels_2": 32, "kernel_size": 5},
-]
+            nn.Conv2d(channels_1, channels_2, kernel_size=kernel_size, padding=kernel_size // 2),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
 
-# Hyperparameters to test
-hyperparams = [
-    {"lr": 0.001, "batch_size": 64, "epochs": 5},
-    {"lr": 0.0005, "batch_size": 64, "epochs": 5},
-    {"lr": 0.001, "batch_size": 128, "epochs": 5},
-    {"lr": 0.001, "batch_size": 64, "epochs": 10},
-]
+            nn.Flatten(),
+            nn.Dropout(0.3),
+            nn.Linear(channels_2 * 7 * 7, 128),
+            nn.ReLU(),
+            nn.Linear(128, 26)
+        )
 
-# === 5. Utility Functions ===
+    def forward(self, x):
+        return self.model(x)
+
+# === Utilities ===
+def generate_model_name(arch, lr, batch_size, epochs, acc, device):
+    return (f"deepcnn_c1{arch['channels_1']}_c2{arch['channels_2']}_k{arch['kernel_size']}"
+            f"_lr{lr}_bs{batch_size}_ep{epochs}_acc{int(round(acc))}_{device}")
+
+def save_model(model, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    torch.save(model.state_dict(), path)
+    print(f"Model saved to: {path}")
+
 def smooth_losses(losses, factor=20):
     return [sum(losses[i:i+factor]) / factor for i in range(0, len(losses), factor)]
 
@@ -66,125 +84,99 @@ def test_acc(model, loader):
             total += target.size(0)
     return 100. * correct / total
 
-# === 6. Run Experiments ===
+def print_and_save_summary(path, content):
+    with open(path, "a") as f:
+        f.write(content)
+    print(content)
+
+# === Experiment Config ===
+architectures = [
+    {"channels_1": 8, "channels_2": 16, "kernel_size": 3},
+    {"channels_1": 16, "channels_2": 32, "kernel_size": 3},
+    {"channels_1": 32, "channels_2": 64, "kernel_size": 3},
+    {"channels_1": 16, "channels_2": 32, "kernel_size": 5},
+]
+
+hyperparams = [
+    {"lr": 0.001, "batch_size": 64, "epochs": 5},
+    {"lr": 0.0005, "batch_size": 64, "epochs": 5},
+    {"lr": 0.001, "batch_size": 128, "epochs": 5},
+    {"lr": 0.001, "batch_size": 64, "epochs": 10},
+]
+
+summary_file = os.path.join(output_dir_base, "combined_experiment_summary.txt")
+open(summary_file, 'w').write("=== COMBINED EXPERIMENT SUMMARY (Task B) ===\n")
+
+# === Run Experiments ===
 best_accuracy = 0.0
-best_model_path = None
-experiment_results = []  # store results for table
+best_model_path = ""
+experiment_id = 1
+results = []
 
-with open(summary_file_path, "w") as summary_file:
-    summary_file.write("=== COMBINED EXPERIMENT SUMMARY (Task B) ===\n")
+for arch in architectures:
+    for hparam in hyperparams:
+        print(f"\n=== Experiment {experiment_id} ===")
 
-    experiment_id = 1
+        train_loader, test_loader, _ = load_emnist_data(
+            batch_size_train=hparam['batch_size'], batch_size_test=1000)
 
-    for arch in architectures:
-        for hparam in hyperparams:
-            print(f"\n=== Experiment {experiment_id} ===")
-            print(f"Architecture: {arch} | Hyperparams: {hparam}")
+        model = DeepCNN(**arch).to(device)
+        optimizer = optim.Adam(model.parameters(), lr=hparam['lr'])
+        criterion = nn.CrossEntropyLoss()
 
-            # Load data with specific batch size
-            train_loader, test_loader, _ = load_emnist_data(
-                batch_size_train=hparam["batch_size"], batch_size_test=1000
-            )
+        all_batch_losses = []
+        start_time = time.time()
 
-            # Initialize model and optimizer
-            model = DeepCNN(**arch).to(device)
-            optimizer = optim.Adam(model.parameters(), lr=hparam["lr"])
-            criterion = nn.CrossEntropyLoss()
+        for epoch in range(1, hparam['epochs'] + 1):
+            batch_losses = []
+            model.train()
+            for data, target in train_loader:
+                data, target = data.to(device), (target - 1).to(device)
+                optimizer.zero_grad()
+                output = model(data)
+                loss = criterion(output, target)
+                loss.backward()
+                optimizer.step()
+                batch_losses.append(loss.item())
+            all_batch_losses.append(batch_losses)
+            acc = test_acc(model, test_loader)
+            print(f"Epoch {epoch}: Accuracy = {acc:.2f}%")
 
-            all_batch_losses = []
-            start_time = time.time()
+        training_time = time.time() - start_time
+        final_acc = test_acc(model, test_loader)
 
-            # Training loop
-            for epoch in range(1, hparam["epochs"] + 1):
-                batch_losses = []
-                model.train()
-                for data, target in train_loader:
-                    data, target = data.to(device), (target - 1).to(device)
-                    optimizer.zero_grad()
-                    output = model(data)
-                    loss = criterion(output, target)
-                    loss.backward()
-                    optimizer.step()
-                    batch_losses.append(loss.item())
-                all_batch_losses.append(batch_losses)
+        # Save model
+        model_name = generate_model_name(arch, hparam['lr'], hparam['batch_size'], hparam['epochs'], final_acc, str(device))
+        model_path = os.path.join(model_dir_test, model_name + ".pth")
+        save_model(model, model_path)
 
-                acc = test_acc(model, test_loader)
-                print(f"Epoch {epoch}: Accuracy = {acc:.2f}%")
+        # Track best model
+        if final_acc > best_accuracy:
+            best_accuracy = final_acc
+            best_model_path = model_path
 
-            end_time = time.time()
-            training_time = end_time - start_time
-            final_accuracy = test_acc(model, test_loader)
+        # Save experiment summary
+        summary = (
+            f"\n--- EXPERIMENT {experiment_id} ---\n"
+            f"Channels: {arch['channels_1']} → {arch['channels_2']}, Kernel: {arch['kernel_size']}\n"
+            f"Learning Rate: {hparam['lr']}, Batch Size: {hparam['batch_size']}, Epochs: {hparam['epochs']}\n"
+            f"Final Accuracy: {final_acc:.2f}%\n"
+            f"Training Time: {training_time:.2f} sec\n"
+            f"Model Path: {model_path}\n"
+        )
+        print_and_save_summary(summary_file, summary)
+        results.append((experiment_id, final_acc))
+        experiment_id += 1
 
-            # Plot loss
-            loss_plot_path = os.path.join(output_dir_base, f"loss_exp{experiment_id}.png")
-            plt.figure(figsize=(10, 5))
-            for epoch_idx, losses in enumerate(all_batch_losses):
-                smoothed = smooth_losses(losses)
-                plt.plot(smoothed, label=f"Epoch {epoch_idx + 1}")
-            plt.title(f"Loss Curve – Experiment {experiment_id}")
-            plt.xlabel("Batch")
-            plt.ylabel("Loss")
-            plt.legend()
-            plt.grid(True)
-            plt.tight_layout()
-            plt.savefig(loss_plot_path)
-            plt.close()
-
-            # Save model to test_models
-            model_name = generate_model_name(
-                architecture="deepcnn",
-                num_filters=arch["channels_2"],
-                fc_out=26,
-                num_epochs=hparam["epochs"],
-                optimizer_name="Adam",
-                learning_rate=hparam["lr"],
-                accuracy=final_accuracy,
-                device_used=str(device)
-            )
-            model_path = save_model(model, model_name, output_dir=model_dir_test)
-
-            # Track the best model
-            if final_accuracy > best_accuracy:
-                best_accuracy = final_accuracy
-                best_model_path = model_path
-
-            # Save detailed summary
-            print_and_save_summary(
-                device=device,
-                num_epochs=hparam["epochs"],
-                train_loader=train_loader,
-                test_loader=test_loader,
-                optimizer_name="Adam",
-                learning_rate=hparam["lr"],
-                training_time=training_time,
-                loss_plot_path=loss_plot_path,
-                sample_plot_path=os.path.join(output_dir_base, "sample_images.png"),
-                final_accuracy=final_accuracy,
-                model_path=model_path,
-                output_dir=output_dir_base
-            )
-
-            # Write to combined summary file
-            summary_file.write(f"\n--- EXPERIMENT {experiment_id} ---\n")
-            summary_file.write(f"Channels: {arch['channels_1']} → {arch['channels_2']}, Kernel Size: {arch['kernel_size']}\n")
-            summary_file.write(f"Learning Rate: {hparam['lr']}, Batch Size: {hparam['batch_size']}, Epochs: {hparam['epochs']}\n")
-            summary_file.write(f"Final Accuracy: {final_accuracy:.2f}%\n")
-            summary_file.write(f"Training Time: {training_time:.2f} sec\n")
-            summary_file.write(f"Model Path: {model_path}\n")
-            summary_file.write(f"Loss Plot: {loss_plot_path}\n")
-
-            experiment_results.append((experiment_id, final_accuracy))
-            experiment_id += 1
-
-# === 7. Copy best model to final folder ===
+# === Copy Best Model ===
 if best_model_path:
     final_best_model_path = os.path.join(model_dir_final, os.path.basename(best_model_path))
     shutil.copy(best_model_path, final_best_model_path)
     print(f"\nBest model copied to: {final_best_model_path}")
     print(f"Best Accuracy: {best_accuracy:.2f}%")
 
-# Print summary table
+# === Print Summary Table ===
 print("\n=== Experiment Summary ===")
-for exp_id, acc in experiment_results:
-    print(f"Experiment {exp_id}: Accuracy = {acc:.2f}%")
+for eid, acc in results:
+    print(f"Experiment {eid}: Accuracy = {acc:.2f}%")
 print(f"\nBest Accuracy: {best_accuracy:.2f}%")

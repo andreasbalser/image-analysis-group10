@@ -5,132 +5,78 @@ You should also experiment with changing the number of output channels (feature 
 Some of the parameters relevant to duration of the training process and the prediction accuracy of a network include learning rate, number of epochs, batch size. Test different variations of these parameters. What is the purpose of these parameters? How does varying the learning rate, number of epochs and batch size change the learning behavior?
 
 ---
-# Task B – Network Design and Parameter Experiments
+# Task B – Architecture and Hyperparameter Experiments
 
-After completing Task A with a **simple baseline CNN**, we extended the experiments to explore **deeper architectures, more feature maps, different kernel sizes, and hyperparameter variations**. The aim was to improve performance on the EMNIST **letters** dataset.
-
----
-
-## 1. Adding Layers – More Complex Model
-
-In Task A, the CNN was shallow, with a single convolutional layer.  
-For Task B, we implemented a **deeper CNN** with this structure:
-
-- **Conv2D (channels\_1 filters, kernel)** → ReLU → MaxPooling  
-- **Conv2D (channels\_2 filters, kernel)** → ReLU → MaxPooling  
-- Flatten  
-- Dropout (0.3)  
-- Fully Connected (128 units) → ReLU  
-- Output Layer (26 classes)
-
-This **additional convolutional layer** enables the model to extract **hierarchical features**, improving its ability to generalize.
+After the initial baseline in Task A, we expanded our experiments by training a more complex CNN architecture and systematically varying model and training parameters.
 
 ---
 
-### **Impact of a Deeper Network**
+## 🔧 Model Architecture: DeepCNN
 
-- **Accuracy:**  
-  - Increased significantly from **87.24% (Task A)** to **93–94% (Task B)**.
-- **Training Time:**  
-  - **Task A:** 43.66 seconds (1 conv layer)  
-  - **Task B:** From ~85 seconds (small networks) up to 1,496 seconds (large, deep networks).
-  - Example: Experiment 16 (best model) required **442.42 seconds**, which is roughly **10 times longer than Task A**.
+The enhanced model (`DeepCNN`) added:
+- A second **Conv2D → ReLU → MaxPool** block
+- A **Dropout** layer to reduce overfitting
+- A **128-unit fully connected (FC) layer** before classification
 
----
-
-## 2. Feature Maps (Output Channels)
-
-**Feature maps** represent different learned filters that extract distinct patterns (edges, shapes, textures) in the image.  
-Increasing the number of channels means the network learns **more patterns**, but also requires **more computation**.
+This made the model significantly deeper and more expressive.
 
 ---
 
-### **Effects of Changing Channels and Kernel Size**
+## 🔍 Observations on Architecture Changes
 
-- **Channels:**
-  - Increased from **8→16** to **32→64**, resulting in higher accuracy.
-- **Kernel size:**
-  - **3×3 kernels**: Efficient for fine-grained local patterns.
-  - **5×5 kernels**: Capture a larger context, sometimes improving accuracy (e.g., 93.97% with 5×5).
+| Variant | Channels (c1 → c2) | Kernel Size | Accuracy (%) | Time (s) |
+|---------|--------------------|--------------|---------------|-----------|
+| Exp 1–4 | 8 → 16             | 3×3          | 93.14 max     | 90–2133   |
+| Exp 5–8 | 16 → 32            | 3×3          | 93.43 max     | 130–292   |
+| Exp 9–12| 32 → 64            | 3×3          | **93.72**     | 236–496   |
+| Exp 13–16| 16 → 32           | **5×5**      | **93.92**     | 223–493   |
 
----
-
-## 3. Hyperparameter Experiments
-
-We systematically varied:
-
-- **Learning Rate (LR)**: 0.001 vs 0.0005
-- **Batch Size**: 64 vs 128
-- **Epochs**: 5 vs 10
-
-### **Purpose and Observations:**
-
-- **Learning Rate (LR)**  
-  - Controls step size during optimization.  
-  - **0.001** → faster convergence, slightly better results.  
-  - **0.0005** → safer convergence, but slower and less accurate.
-
-- **Batch Size**  
-  - Defines how many samples are processed before updating weights.  
-  - **64:** More frequent updates, better generalization.  
-  - **128:** Smoother gradients but slightly lower accuracy.
-
-- **Epochs**  
-  - **More epochs** improve accuracy at the cost of increased training time.
+### ✅ Key Takeaways:
+- **Deeper networks** (more filters, larger kernels) generally performed better.
+- Increasing the number of filters (output channels) improved feature extraction, especially when combined with longer training.
+- **5×5 kernels** improved accuracy, likely by capturing more spatial context.
+- Larger models increased training time.
 
 ---
 
-### **Impact on Training Time**
+## 📘 What Are Feature Maps?
 
-- **5 epochs:** 80–220 seconds depending on architecture.  
-- **10 epochs:** Training time doubled or tripled, with best results:
-  - Example: Experiment 16 → **442.42 seconds**.
-- **Largest model:** 1,496 seconds (32→64 channels, 10 epochs).
+Feature maps are the outputs of convolutional layers. Each map highlights different patterns (e.g., edges, corners, shapes). Increasing the number of output channels means the network can learn **more diverse and abstract features**, improving accuracy — especially in complex tasks like handwriting recognition.
 
 ---
 
-## 4. Results Overview
+## ⚙️ Hyperparameter Experiments
 
-### **Best Experiment (Exp. 16)**
+We tested different combinations of:
 
-- Channels: 16 → 32  
-- Kernel Size: 5×5  
-- Learning Rate: 0.001  
-- Batch Size: 64  
-- Epochs: 10  
-- **Final Accuracy:** 93.97%  
-- **Training Time:** 442.42 seconds  
+| Parameter       | Values tested                          |
+|-----------------|-----------------------------------------|
+| Learning rate   | `0.001`, `0.0005`                      |
+| Batch size      | `64`, `128`                            |
+| Epochs          | `5`, `10`                              |
 
----
+### 💡 Observations:
 
-## 5. Optimizer
+- **Learning rate**:
+  - `0.001` generally converged faster and reached higher accuracy.
+  - `0.0005` was slower and sometimes underperformed due to smaller updates.
 
-**Adam optimizer** was chosen because it combines momentum with adaptive learning rates, leading to **fast and stable convergence without much tuning**.
+- **Batch size**:
+  - `64` gave better performance — more frequent updates and generalization.
+  - `128` was slightly faster but occasionally led to lower accuracy.
 
----
-
-## 6. Final Model
-
-The **best-performing model** was automatically saved for later tasks:
-
-
-This model will be used for:
-
-- **Transfer learning (Task C)**
-- **Classifying own test images (Task D)**
+- **Epochs**:
+  - Longer training (10 epochs) **almost always improved accuracy**.
+  - Especially important for deeper or more complex architectures.
 
 ---
 
-## 7. Key Findings
+## 🏆 Best Result
 
-- **Deeper architectures improve accuracy** significantly.
-- **More channels and larger kernels** improve feature extraction.
-- **More epochs and smaller batch sizes** improve performance, but increase training time.
-- Training time increased from **~44 s (Task A)** to **442 s (Task B best model)**.
+- **Experiment 13** (16 → 32 channels, 5×5 kernel, lr=0.001, bs=64, 5 epochs)
+- **Final Accuracy**: **93.92%**
+- **Training Time**: 233.45 sec
+
+This model was saved for use in Task C and Task D.
 
 ---
-
-## Conclusion
-
-Experiments confirmed that deeper CNNs with carefully tuned hyperparameters outperform the baseline model. While accuracy improved from 87% to 94%, this came at the cost of longer training times. The final saved model balances performance and complexity and will serve as the foundation for the next tasks.
-

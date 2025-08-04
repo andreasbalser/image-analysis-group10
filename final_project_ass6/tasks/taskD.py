@@ -9,20 +9,25 @@ from PIL import Image, ImageOps
 # -----------------------------
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Path to pretrained letter model (best from Task B, Exp. 16)
-LETTER_MODEL_PATH = "final_project_ass6/saved_models/saved_models_taskB/deepcnn_32f_fc26_ep10_adam_lr0.001_acc94_cpu.pth"
+# Paths to pretrained models
+LETTER_MODEL_PATH = "saved_models/saved_models_taskB/deepcnn_c116_c232_k5_lr0.001_bs64_ep5_acc94_cpu.pth"
+DIGIT_MODEL_PATH = "saved_models/saved_models_taskC/deepcnn_transfer_c116_c232_k5_fc10_ep5_adam_lr0.001_bs64_acc99_cpu.pth"
 
-# Class labels for letters A–Z
+# Class labels
 LETTER_CLASSES = [chr(i) for i in range(65, 91)]  # A-Z
+DIGIT_CLASSES = [str(i) for i in range(10)]       # 0-9
 
-# Preprocessing: normalization as used during training
+import matplotlib.pyplot as plt
+
+# Preprocessing: EMNIST normalization and transformations
 transform = transforms.Compose([
+    transforms.Resize((28, 28)),
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
 ])
 
 # -----------------------------
-# Model architecture (matches best Task B experiment)
+# Model architecture (used for both models)
 # -----------------------------
 class DeepCNN(nn.Module):
     def __init__(self, channels_1=16, channels_2=32, kernel_size=5, num_classes=26):
@@ -47,10 +52,10 @@ class DeepCNN(nn.Module):
         return self.model(x)
 
 # -----------------------------
-# Load letter model
+# Load model
 # -----------------------------
-def load_letter_model(model_path):
-    model = DeepCNN(channels_1=16, channels_2=32, kernel_size=5, num_classes=26)
+def load_model(model_path, num_classes):
+    model = DeepCNN(channels_1=16, channels_2=32, kernel_size=5, num_classes=num_classes)
     state_dict = torch.load(model_path, map_location=DEVICE)
     model.load_state_dict(state_dict)
     model.to(DEVICE)
@@ -61,21 +66,21 @@ def load_letter_model(model_path):
 # Prediction function
 # -----------------------------
 def predict_image(image_path, model, class_labels):
-    # Open and preprocess
-    image = Image.open(image_path).convert("L")
-    image = ImageOps.autocontrast(image)
-    image = ImageOps.invert(image)  # Invert so text is white on black (like EMNIST)
-    bbox = image.getbbox()
-    if bbox:
-        image = image.crop(bbox)
-    image = image.resize((28, 28))
-    image = transform(image).unsqueeze(0).to(DEVICE)
+    image = Image.open(image_path).convert("L")  # grayscale          # white on black like EMNIST
+    image = ImageOps.autocontrast(image)         # stretch contrast
 
-    # Inference
+    # Resize directly to 28x28, no cropping or padding
+    image = image.resize((28, 28))
+
+    image = transform(image)                     # normalize
+    image = image.unsqueeze(0).to(DEVICE)        # add batch dimension
+
     with torch.no_grad():
         outputs = model(image)
         _, predicted = torch.max(outputs, 1)
+
     return class_labels[predicted.item()]
+
 
 def predict_folder(folder_path, model, class_labels):
     predictions = {}
@@ -86,19 +91,25 @@ def predict_folder(folder_path, model, class_labels):
             predictions[filename] = pred
     return predictions
 
+
+
+
 # -----------------------------
 # Run predictions
 # -----------------------------
 if __name__ == "__main__":
-    # Load only the letter model
-    letter_model = load_letter_model(LETTER_MODEL_PATH)
-
-    # Folder with handwritten test images (letters only)
-    letter_folder = "final_project_ass6/own_data/letters"
-
-    # Predict and print results
+    # Predict letters
+    print("--- Letter predictions ---")
+    letter_model = load_model(LETTER_MODEL_PATH, num_classes=26)
+    letter_folder = "own_data/letters"
     letter_preds = predict_folder(letter_folder, letter_model, LETTER_CLASSES)
-
-    print("Letter predictions:")
     for fname, pred in letter_preds.items():
+        print(f"{fname}: {pred}")
+
+    # Predict digits
+    print("\n--- Digit predictions ---")
+    digit_model = load_model(DIGIT_MODEL_PATH, num_classes=10)
+    digit_folder = "own_data/numbers"
+    digit_preds = predict_folder(digit_folder, digit_model, DIGIT_CLASSES)
+    for fname, pred in digit_preds.items():
         print(f"{fname}: {pred}")
