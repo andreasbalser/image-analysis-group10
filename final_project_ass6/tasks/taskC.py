@@ -6,11 +6,8 @@ import time
 from torch.utils.data import DataLoader
 from torchvision.datasets import EMNIST
 import os
-import string
 
-# -----------------------------
-# Configuration
-# -----------------------------
+# config
 BATCH_SIZE = 64
 EPOCHS = 5
 LEARNING_RATE = 0.001
@@ -19,9 +16,7 @@ NUM_CLASSES = 10
 
 MODEL_PATH = "saved_models/saved_models_taskB/deepcnn_c116_c232_k5_lr0.001_bs64_ep5_acc94_cpu.pth"
 
-# -----------------------------
-# Model Definition (from best experiment)
-# -----------------------------
+# model Def
 class DeepCNN(nn.Module):
     def __init__(self, channels_1=16, channels_2=32, kernel_size=5, num_classes=26):
         super().__init__()
@@ -44,9 +39,7 @@ class DeepCNN(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# -----------------------------
-# Load EMNIST Digits Dataset
-# -----------------------------
+# Load Dataset
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
@@ -59,9 +52,7 @@ test_dataset = EMNIST(root=data_root, split="digits", train=False, download=True
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-# -----------------------------
-# Load Pretrained Model and Modify Last Layer
-# -----------------------------
+# Load pretrained Model
 model = DeepCNN(channels_1=16, channels_2=32, kernel_size=5, num_classes=26)
 state_dict = torch.load(MODEL_PATH, map_location=DEVICE)
 model.load_state_dict(state_dict)
@@ -77,16 +68,12 @@ for param in model.parameters():
 for param in model.model[-1].parameters():
     param.requires_grad = True
 
-# -----------------------------
-# Training Setup
-# -----------------------------
+# Training setup
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.model[-1].parameters(), lr=LEARNING_RATE)
 
-# -----------------------------
-# Transfer Learning Training
-# -----------------------------
-print("Starting transfer learning training...")
+
+# Transfer Learning
 start_time = time.time()
 
 for epoch in range(EPOCHS):
@@ -109,9 +96,7 @@ for epoch in range(EPOCHS):
 training_duration = time.time() - start_time
 print(f"\nTraining Time: {training_duration:.2f} seconds")
 
-# -----------------------------
-# Evaluation
-# -----------------------------
+# Eval
 model.eval()
 correct = 0
 total = 0
@@ -127,9 +112,7 @@ with torch.no_grad():
 accuracy = 100 * correct / total
 print(f"Test Accuracy: {accuracy:.2f}%")
 
-# -----------------------------
-# Save Model for Task C
-# -----------------------------
+# save model
 def generate_model_name(architecture, channels_1, channels_2, kernel_size, fc_out,
                         num_epochs, optimizer_name, learning_rate, accuracy, device_used, batch_size=None):
     name = (
@@ -160,4 +143,3 @@ save_dir = "saved_models/saved_models_taskC"
 os.makedirs(save_dir, exist_ok=True)
 save_path = os.path.join(save_dir, model_name + ".pth")
 torch.save(model.state_dict(), save_path)
-print(f"Transfer learning model saved to {save_path}")

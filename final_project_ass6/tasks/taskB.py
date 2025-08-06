@@ -1,5 +1,3 @@
-# === DeepCNN Experiments – No utils.py dependency ===
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,11 +7,9 @@ import time
 import os
 import shutil
 import string
-import random
 from torchvision.datasets import EMNIST
 from torch.utils.data import DataLoader
 
-# === Directories ===
 output_dir_base = "output_images/output_images_taskB"
 model_dir_test = "saved_models/test_models"
 model_dir_final = "saved_models/saved_models_taskB"
@@ -22,11 +18,8 @@ os.makedirs(output_dir_base, exist_ok=True)
 os.makedirs(model_dir_test, exist_ok=True)
 os.makedirs(model_dir_final, exist_ok=True)
 
-# === Device ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
 
-# === Data Loader ===
 def load_emnist_data(batch_size_train=64, batch_size_test=1000):
     transform = transforms.ToTensor()
     train_set = EMNIST(root=data_dir, split='letters', train=True, download=True, transform=transform)
@@ -36,7 +29,7 @@ def load_emnist_data(batch_size_train=64, batch_size_test=1000):
     label_map = {i: letter for i, letter in enumerate(string.ascii_uppercase, start=1)}
     return train_loader, test_loader, label_map
 
-# === Deep CNN Model ===
+# deep model
 class DeepCNN(nn.Module):
     def __init__(self, channels_1=16, channels_2=32, kernel_size=3):
         super().__init__()
@@ -58,8 +51,8 @@ class DeepCNN(nn.Module):
 
     def forward(self, x):
         return self.model(x)
-
-# === Utilities ===
+    
+# helping fcts
 def generate_model_name(arch, lr, batch_size, epochs, acc, device):
     return (f"deepcnn_c1{arch['channels_1']}_c2{arch['channels_2']}_k{arch['kernel_size']}"
             f"_lr{lr}_bs{batch_size}_ep{epochs}_acc{int(round(acc))}_{device}")
@@ -89,7 +82,7 @@ def print_and_save_summary(path, content):
         f.write(content)
     print(content)
 
-# === Experiment Config ===
+# different architectures and parameters
 architectures = [
     {"channels_1": 8, "channels_2": 16, "kernel_size": 3},
     {"channels_1": 16, "channels_2": 32, "kernel_size": 3},
@@ -107,7 +100,7 @@ hyperparams = [
 summary_file = os.path.join(output_dir_base, "combined_experiment_summary.txt")
 open(summary_file, 'w').write("=== COMBINED EXPERIMENT SUMMARY (Task B) ===\n")
 
-# === Run Experiments ===
+# run experiments
 best_accuracy = 0.0
 best_model_path = ""
 experiment_id = 1
@@ -145,12 +138,12 @@ for arch in architectures:
         training_time = time.time() - start_time
         final_acc = test_acc(model, test_loader)
 
-        # Save model
+        # Save 
         model_name = generate_model_name(arch, hparam['lr'], hparam['batch_size'], hparam['epochs'], final_acc, str(device))
         model_path = os.path.join(model_dir_test, model_name + ".pth")
         save_model(model, model_path)
 
-        # Track best model
+        # best model
         if final_acc > best_accuracy:
             best_accuracy = final_acc
             best_model_path = model_path
@@ -167,15 +160,13 @@ for arch in architectures:
         print_and_save_summary(summary_file, summary)
         results.append((experiment_id, final_acc))
         experiment_id += 1
-
-# === Copy Best Model ===
+# put best model in correct folder
 if best_model_path:
     final_best_model_path = os.path.join(model_dir_final, os.path.basename(best_model_path))
     shutil.copy(best_model_path, final_best_model_path)
     print(f"\nBest model copied to: {final_best_model_path}")
     print(f"Best Accuracy: {best_accuracy:.2f}%")
 
-# === Print Summary Table ===
 print("\n=== Experiment Summary ===")
 for eid, acc in results:
     print(f"Experiment {eid}: Accuracy = {acc:.2f}%")

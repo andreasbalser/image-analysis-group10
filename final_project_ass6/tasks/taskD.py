@@ -4,31 +4,24 @@ import torch.nn as nn
 from torchvision import transforms
 from PIL import Image, ImageOps
 
-# -----------------------------
-# Configuration
-# -----------------------------
+import matplotlib.pyplot as plt
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Paths to pretrained models
+# pretrained models with classes
 LETTER_MODEL_PATH = "saved_models/saved_models_taskB/deepcnn_c116_c232_k5_lr0.001_bs64_ep5_acc94_cpu.pth"
 DIGIT_MODEL_PATH = "saved_models/saved_models_taskC/deepcnn_transfer_c116_c232_k5_fc10_ep5_adam_lr0.001_bs64_acc99_cpu.pth"
 
-# Class labels
-LETTER_CLASSES = [chr(i) for i in range(65, 91)]  # A-Z
-DIGIT_CLASSES = [str(i) for i in range(10)]       # 0-9
+LETTER_CLASSES = [chr(i) for i in range(65, 91)] 
+DIGIT_CLASSES = [str(i) for i in range(10)]     
 
-import matplotlib.pyplot as plt
-
-# Preprocessing: EMNIST normalization and transformations
+#preprocessing to maybe enhance results a little bit (spoiler: didnt really enhance it)
 transform = transforms.Compose([
     transforms.Resize((28, 28)),
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
 ])
 
-# -----------------------------
-# Model architecture (used for both models)
-# -----------------------------
 class DeepCNN(nn.Module):
     def __init__(self, channels_1=16, channels_2=32, kernel_size=5, num_classes=26):
         super().__init__()
@@ -51,9 +44,6 @@ class DeepCNN(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# -----------------------------
-# Load model
-# -----------------------------
 def load_model(model_path, num_classes):
     model = DeepCNN(channels_1=16, channels_2=32, kernel_size=5, num_classes=num_classes)
     state_dict = torch.load(model_path, map_location=DEVICE)
@@ -62,25 +52,20 @@ def load_model(model_path, num_classes):
     model.eval()
     return model
 
-# -----------------------------
-# Prediction function
-# -----------------------------
-def predict_image(image_path, model, class_labels):
-    image = Image.open(image_path).convert("L")  # grayscale          # white on black like EMNIST
-    image = ImageOps.autocontrast(image)         # stretch contrast
 
-    # Resize directly to 28x28, no cropping or padding
+#prediction with other image enhancements
+def predict_image(image_path, model, class_labels):
+    image = Image.open(image_path).convert("L") 
+    image = ImageOps.autocontrast(image)        
     image = image.resize((28, 28))
 
-    image = transform(image)                     # normalize
-    image = image.unsqueeze(0).to(DEVICE)        # add batch dimension
-
+    image = transform(image)                    
+    image = image.unsqueeze(0).to(DEVICE) 
     with torch.no_grad():
         outputs = model(image)
         _, predicted = torch.max(outputs, 1)
 
     return class_labels[predicted.item()]
-
 
 def predict_folder(folder_path, model, class_labels):
     predictions = {}
@@ -91,12 +76,6 @@ def predict_folder(folder_path, model, class_labels):
             predictions[filename] = pred
     return predictions
 
-
-
-
-# -----------------------------
-# Run predictions
-# -----------------------------
 if __name__ == "__main__":
     # Predict letters
     print("--- Letter predictions ---")

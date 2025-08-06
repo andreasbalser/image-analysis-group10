@@ -1,4 +1,3 @@
-# === 1. Imports ===
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -11,15 +10,12 @@ import random
 from torchvision.datasets import EMNIST
 from torch.utils.data import DataLoader
 
-# === 2. Output Folder Setup ===
 output_dir = "output_images/output_images_taskA"
 os.makedirs(output_dir, exist_ok=True)
 
-# === 3. Device Configuration ===
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
 
-# === 4. Data Loading ===
+# load data
 transform = transforms.ToTensor()
 train_set = EMNIST(root="data", split='letters', train=True, download=True, transform=transform)
 test_set = EMNIST(root="data", split='letters', train=False, download=True, transform=transform)
@@ -28,7 +24,7 @@ test_loader = DataLoader(test_set, batch_size=1000)
 
 label_map = {i: letter for i, letter in enumerate(string.ascii_uppercase, start=1)}
 
-# === 5. Plot Random Sample Images ===
+# plot samples
 def plot_random_emnist_samples(dataset, label_map, output_path, num_samples=4):
     fig, axes = plt.subplots(1, num_samples, figsize=(15, 3))
     for ax in axes:
@@ -44,7 +40,7 @@ def plot_random_emnist_samples(dataset, label_map, output_path, num_samples=4):
 sample_image_path = os.path.join(output_dir, "sample_images.png")
 plot_random_emnist_samples(train_set, label_map, sample_image_path)
 
-# === 6. Define Simple CNN Model (Figure 2) ===
+# define cnn
 model = nn.Sequential(
     nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=1),
     nn.ReLU(),
@@ -53,11 +49,11 @@ model = nn.Sequential(
     nn.Linear(in_features=8 * 14 * 14, out_features=26)
 ).to(device)
 
-# === 7. Loss Function and Optimizer ===
+# loss and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# === 8. Training and Testing Functions ===
+# training
 def train(model, loader, optimizer, criterion, epoch, loss_list):
     model.train()
     total_loss = 0
@@ -74,6 +70,7 @@ def train(model, loader, optimizer, criterion, epoch, loss_list):
     avg_loss = total_loss / len(loader)
     print(f"Epoch {epoch} — Avg. Training Loss: {avg_loss:.4f}")
 
+# test
 def test(model, loader):
     model.eval()
     correct = 0
@@ -89,7 +86,7 @@ def test(model, loader):
     print(f"Test Accuracy: {accuracy:.2f}%")
     return accuracy
 
-# === 9. Training Loop ===
+# training loop
 num_epochs = 5
 all_batch_losses = []
 start_time = time.time()
@@ -107,7 +104,7 @@ print(f"\nTotal training time: {training_time:.2f} seconds")
 # Final test
 final_accuracy = test(model, test_loader)
 
-# === 10. Plot Loss ===
+# plot
 def smooth_losses(losses, factor=20):
     return [sum(losses[i:i+factor]) / factor for i in range(0, len(losses), factor)]
 
@@ -125,7 +122,7 @@ loss_plot_path = os.path.join(output_dir, "training_loss_plot_smoothed.png")
 plt.savefig(loss_plot_path)
 plt.show()
 
-# === 11. Save Model ===
+# save
 def save_model(model, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     torch.save(model.state_dict(), path)
@@ -134,7 +131,7 @@ def save_model(model, path):
 model_path = f"saved_models/saved_models_taskA/cnn1_8f_fc26_ep{num_epochs}_adam_lr0.001_acc{int(final_accuracy)}_{str(device)}.pth"
 save_model(model, model_path)
 
-# === 12. Summary Logging ===
+# save summary
 def print_and_save_summary(summary_path):
     summary = (
         "\n=== TRAINING SUMMARY ===\n"
@@ -151,7 +148,6 @@ def print_and_save_summary(summary_path):
         f"Model saved to: {model_path}\n"
     )
 
-    print(summary)
     os.makedirs(os.path.dirname(summary_path), exist_ok=True)
     with open(summary_path, "w") as f:
         f.write(summary)
